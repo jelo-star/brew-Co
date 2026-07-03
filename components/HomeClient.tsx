@@ -95,6 +95,18 @@ export default function HomeClient({
   const [resGuests, setResGuests] = useState('2')
   const [showBackToTop, setShowBackToTop] = useState(false)
   const [isCupLoaded, setIsCupLoaded] = useState(false)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1200)
+
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth)
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
+  const handleCupLoad = useCallback(() => {
+    setIsCupLoaded(true)
+  }, [])
 
   const featuredDrinks = useMemo(() => menuItems.filter((item) => item.is_featured), [menuItems])
   const filteredMenu = useMemo(
@@ -124,7 +136,7 @@ export default function HomeClient({
 
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
     const initX = isMobile ? 0 : 0.55
-    const initY = isMobile ? 0.95 : 1.05 // Lowered to align better
+    const initY = isMobile ? 1.15 : 1.05 // Raised on mobile
     const initScale = isMobile ? 0.20 : 0.26 // Slightly smaller
 
     // Ensure the cup is at its initial transform
@@ -146,17 +158,17 @@ export default function HomeClient({
     })
 
     // Stage 1: Hero to About (move to right position)
-    tl.to(cup.position, { duration: 1, x: isMobile ? 0.45 : 0.65, y: 0.90, z: 0.15, ease: 'sine.inOut' }) // Lowered position
+    tl.to(cup.position, { duration: 1, x: isMobile ? 0.45 : 0.65, y: isMobile ? 1.05 : 0.90, z: 0.15, ease: 'sine.inOut' }) // Raised on mobile
       .to(cup.rotation, { duration: 1, x: 0.38, y: 0.25 + Math.PI * 1.5, z: 0.1, ease: 'sine.inOut' }, 0) // Tilted forward (+0.20)
       .to(cup.scale, { duration: 1, x: initScale * 0.95, y: initScale * 0.95, z: initScale * 0.95, ease: 'sine.inOut' }, 0)
 
     // Stage 1.5: Hold position during About section (keep right, just rotate)
-    tl.to(cup.position, { duration: 1, x: isMobile ? 0.45 : 0.65, y: 0.90, z: 0.15, ease: 'none' })
+    tl.to(cup.position, { duration: 1, x: isMobile ? 0.45 : 0.65, y: isMobile ? 1.05 : 0.90, z: 0.15, ease: 'none' }) // Raised on mobile
       .to(cup.rotation, { duration: 1, x: 0.38, y: 0.25 + Math.PI * 3.0, z: 0.1, ease: 'none' }, '<') // Tilted forward (+0.20)
       .to(cup.scale, { duration: 1, x: initScale * 0.95, y: initScale * 0.95, z: initScale * 0.95, ease: 'none' }, '<')
 
     // Stage 2: About to Journey (move left, rotate further, keep slanting)
-    tl.to(cup.position, { duration: 1, x: isMobile ? -0.45 : -0.60, y: 0.85, z: 0.15, ease: 'sine.inOut' })
+    tl.to(cup.position, { duration: 1, x: isMobile ? -0.60 : -0.85, y: isMobile ? 0.80 : 0.65, z: 0.15, ease: 'sine.inOut' }) // Raised on mobile
       .to(cup.rotation, { duration: 1, x: 0.45, y: 0.25 + Math.PI * 4.5, z: -0.08, ease: 'sine.inOut' }, '<') // Tilted forward (+0.20)
       .to(cup.scale, { duration: 1, x: initScale * 1.05, y: initScale * 1.05, z: initScale * 1.05, ease: 'sine.inOut' }, '<')
 
@@ -164,7 +176,7 @@ export default function HomeClient({
       ScrollTrigger.getAll().forEach((trigger) => trigger.kill())
       tl.kill()
     }
-  }, [isCupLoaded])
+  }, [isCupLoaded, windowWidth])
 
   // Refresh ScrollTrigger only when page height actually changes (tab/accordion animations complete)
   useEffect(() => {
@@ -251,7 +263,7 @@ export default function HomeClient({
       
       {/* Wrapper to handle pinning for exactly the first three sections */}
       <div id="coffee-pin-wrapper" style={{ position: 'relative', width: '100%' }}>
-        <CoffeeScene cupRef={cupGroupRef} onLoad={() => setIsCupLoaded(true)} />
+        <CoffeeScene cupRef={cupGroupRef} onLoad={handleCupLoad} />
 
         <header className="premium-header">
           <div className="container header-inner">
@@ -281,8 +293,80 @@ export default function HomeClient({
                 Reserve Table
               </button>
             </nav>
+
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="mobile-menu-btn"
+              aria-label="Toggle menu"
+              style={{ background: 'none', border: 0, padding: 8, cursor: 'pointer', zIndex: 110 }}
+            >
+              {isMobileMenuOpen ? <X size={28} style={{ color: 'var(--text-primary)' }} /> : <Menu size={28} style={{ color: 'var(--text-primary)' }} />}
+            </button>
           </div>
         </header>
+
+        {/* Mobile Menu Panel */}
+        <AnimatePresence>
+          {isMobileMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.25, ease: 'easeOut' }}
+              style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100vh',
+                background: 'rgba(26, 17, 12, 0.98)',
+                backdropFilter: 'blur(20px)',
+                WebkitBackdropFilter: 'blur(20px)',
+                zIndex: 98,
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                alignItems: 'center',
+                gap: '24px',
+                padding: '24px'
+              }}
+            >
+              {navItems.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => {
+                    scrollToSection(item.id)
+                    setIsMobileMenuOpen(false)
+                  }}
+                  style={{
+                    background: 'none',
+                    border: 0,
+                    fontSize: '1.4rem',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.1em',
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                    color: activeSection === item.id ? 'var(--accent-gold)' : 'var(--text-primary)',
+                    transition: 'color 0.2s'
+                  }}
+                >
+                  {item.label}
+                </button>
+              ))}
+              <button
+                onClick={() => {
+                  setIsReserveModalOpen(true)
+                  setIsMobileMenuOpen(false)
+                }}
+                className="btn btn-primary"
+                style={{ marginTop: '16px', padding: '12px 32px', fontSize: '0.95rem' }}
+              >
+                Reserve Table
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Background Decor */}
         <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', overflow: 'hidden', pointerEvents: 'none', zIndex: 1 }}>

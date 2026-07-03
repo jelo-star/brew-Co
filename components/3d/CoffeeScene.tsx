@@ -3,7 +3,7 @@
 import { Canvas, useFrame } from '@react-three/fiber'
 import { Sparkles, Center, Environment } from '@react-three/drei'
 import CoffeeCup from './CoffeeCup'
-import { RefObject, Suspense, useMemo, useRef } from 'react'
+import { RefObject, Suspense, useMemo, useRef, memo } from 'react'
 import * as THREE from 'three'
 
 interface CoffeeSceneProps {
@@ -108,7 +108,7 @@ function FloatingDecorations() {
   )
 }
 
-export default function CoffeeScene({ cupRef, onLoad }: CoffeeSceneProps) {
+const CoffeeScene = memo(function CoffeeScene({ cupRef, onLoad }: CoffeeSceneProps) {
   return (
     <div className="coffee-scene-container">
       <Canvas
@@ -165,4 +165,6 @@ export default function CoffeeScene({ cupRef, onLoad }: CoffeeSceneProps) {
       </Canvas>
     </div>
   )
-}
+})
+
+export default CoffeeScene

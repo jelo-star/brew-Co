@@ -426,7 +426,7 @@ export default function CoffeeCup({ cupRef, onLoad }: CoffeeCupProps) {
 
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
   const initX = isMobile ? 0 : 0.55
-  const initY = isMobile ? 0.95 : 1.05
+  const initY = isMobile ? 1.15 : 1.05
   const initScale = isMobile ? 0.20 : 0.26
 
   return (
